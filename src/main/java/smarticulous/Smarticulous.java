@@ -19,6 +19,7 @@ public class Smarticulous {
      * null if the db has not yet been opened.
      */
     Connection db;
+    private User user.fir;
 
     /**
      * Open the {@link Smarticulous} SQLite database.
@@ -129,8 +130,51 @@ public class Smarticulous {
      * @throws SQLException
      */
     public int addOrUpdateUser(User user, String password) throws SQLException {
-        // TODO: Implement
-        return -1;
+        Statement st = db.createStatement();
+        // Create a table of all users with the same username as the given user's username
+        PreparedStatement preparedStatement = db.prepareStatement("SELECT Username FROM User WHERE Username = ?");
+        preparedStatement.setString(1, user.username);
+
+        ResultSet res = preparedStatement.executeQuery();
+        if (res.next()){
+            // a user with user.username does exist - update their password and firstname/lastname in the database.
+            updateUser(user, password);
+            return res.getInt("userId");
+        }
+        else{
+            // The user with user.username does not exist - add it to the database.
+            return createUser(user, password);
+        }
+    }
+
+    // Helper method - create new user with the given User's firstname, lastname and the given password
+    private int createUser(User user, String password) throws SQLException{
+        PreparedStatement preparedStatement = db.prepareStatement("INSERT INTO User (Username, Firstname, Lastname, Password) VALUES (?, ?, ?, ?)",
+                Statement.RETURN_GENERATED_KEYS);
+        preparedStatement.setString(1, user.username);
+        preparedStatement.setString(2, user.firstname);
+        preparedStatement.setString(3, user.lastname);
+        preparedStatement.setString(4, password);
+
+        // should I????
+        preparedStatement.executeUpdate();
+
+        // Return the new userId
+        ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+        return generatedKeys.getInt(1);
+    }
+
+    // Helper method - update the given user firstname, lastname and the given password
+    private void updateUser(User user, String password) throws SQLException{
+        PreparedStatement preparedStatement = db.prepareStatement("UPDATE User SET Password = ?, Firstname = ?, Lastname = ? WHERE Username = ?");
+        preparedStatement.setString(1, password);
+        preparedStatement.setString(2, user.firstname);
+        preparedStatement.setString(3, user.lastname);
+        preparedStatement.setString(4, user.username);
+
+        // should I????
+        preparedStatement.executeUpdate();
+
     }
 
 
