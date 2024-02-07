@@ -85,7 +85,21 @@ public class Smarticulous {
      */
     public Connection openDB(String dburl) throws SQLException {
         Connection db = DriverManager.getConnection(dburl);
+        // Make sure the database contains the following tables and create them if necessary
+        createTable("User", "UserId INTEGER PRIMARY KEY, Username TEXT UNIQUE, Firstname TEXT, Lastname TEXT, Password TEXT");
+        createTable("Exercise", "ExerciseId INTEGER PRIMARY KEY, Name TEXT, DueDate INTEGER");
+        createTable("Question", "ExerciseId INTEGER, QuestionId INTEGER, Name TEXT, Desc TEXT, Points INTEGER, PRIMARY KEY (ExerciseId, QuestionId)");
+        createTable("Submission", "SubmissionId INTEGER PRIMARY KEY, UserId INTEGER, ExerciseId INTEGER, SubmissionTime INTEGER");
+        createTable("QuestionGrade", "SubmissionId INTEGER, QuestionId INTEGER, Grade REAL, PRIMARY KEY (SubmissionId, QuestionId)");
+
         return db;
+}
+
+    // Helper method to create a table
+    private void createTable(String tableName, String columns) throws SQLException {
+        Statement st = db.createStatement();
+        st.executeUpdate("CREATE TABLE IF NOT EXISTS " + tableName + " (" + columns + ");");
+
     }
 
 
@@ -294,4 +308,7 @@ public class Smarticulous {
     public Submission getBestSubmission(User user, Exercise exercise) throws SQLException {
         return getSubmission(user, exercise, getBestSubmissionGradesStatement());
     }
+
+
+
 }
