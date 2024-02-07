@@ -1,0 +1,13 @@
+# Ignore IntelliJ IDEA files and directories
+.idea/
+
+# Ignore Gradle files
+.gradle/
+
+# Ignore compiled Java classes (if not already in .gitignore)
+*.class
+
+# Ignore any other build artifacts or temporary files
+/build/
+/out/
+

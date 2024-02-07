@@ -84,8 +84,8 @@ public class Smarticulous {
      * @throws SQLException
      */
     public Connection openDB(String dburl) throws SQLException {
-        // TODO: Implement
-        return null;
+        Connection db = DriverManager.getConnection(dburl);
+        return db;
     }
 
 
