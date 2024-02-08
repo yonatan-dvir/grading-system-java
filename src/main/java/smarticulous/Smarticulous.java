@@ -19,7 +19,6 @@ public class Smarticulous {
      * null if the db has not yet been opened.
      */
     Connection db;
-    private User user.fir;
 
     /**
      * Open the {@link Smarticulous} SQLite database.
@@ -85,7 +84,7 @@ public class Smarticulous {
      * @throws SQLException
      */
     public Connection openDB(String dburl) throws SQLException {
-        Connection db = DriverManager.getConnection(dburl);
+        db = DriverManager.getConnection(dburl);
         // Make sure the database contains the following tables and create them if necessary
         createTable("User", "UserId INTEGER PRIMARY KEY, Username TEXT UNIQUE, Firstname TEXT, Lastname TEXT, Password TEXT");
         createTable("Exercise", "ExerciseId INTEGER PRIMARY KEY, Name TEXT, DueDate INTEGER");
