@@ -190,7 +190,7 @@ public class Smarticulous {
      */
     public boolean verifyLogin(String username, String password) throws SQLException {
         // Create a table of all users with the same username as the given username
-        PreparedStatement preparedStatement = db.prepareStatement("SELECT Username FROM User WHERE Username = ?");
+        PreparedStatement preparedStatement = db.prepareStatement("SELECT Password FROM User WHERE Username = ?");
         preparedStatement.setString(1, username);
 
         ResultSet res = preparedStatement.executeQuery();
