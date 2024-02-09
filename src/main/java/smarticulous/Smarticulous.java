@@ -130,7 +130,8 @@ public class Smarticulous {
      */
     public int addOrUpdateUser(User user, String password) throws SQLException {
         // Create a table of all users with the same username as the given user's username
-        PreparedStatement preparedStatement = db.prepareStatement("SELECT Username FROM User WHERE Username = ?");
+        PreparedStatement preparedStatement = db.prepareStatement("SELECT UserId FROM User WHERE Username = ?");
+        // Setting parameters to replace the "?" in the sql string.
         preparedStatement.setString(1, user.username);
 
         ResultSet res = preparedStatement.executeQuery();
@@ -170,7 +171,7 @@ public class Smarticulous {
         preparedStatement.setString(3, user.lastname);
         preparedStatement.setString(4, user.username);
 
-        // should I????
+        // Executing the query
         preparedStatement.executeUpdate();
 
     }
