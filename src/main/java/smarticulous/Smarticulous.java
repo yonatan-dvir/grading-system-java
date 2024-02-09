@@ -7,6 +7,7 @@ import smarticulous.db.User;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 
 /**
  * The Smarticulous class, implementing a grading system.
@@ -232,7 +233,7 @@ public class Smarticulous {
         if (res.next()){
             return -1;
         }
-        // The user with user.username does not exist - add it to the database and return it's Id.
+        // The user with user.username does not exist - add it to the database and return it's id.
         else{
             // Insert the given exercise to the Exercise table
             PreparedStatement preparedStatementAdd = db.prepareStatement("INSERT INTO Exercise (ExerciseId, Name, DueDate) VALUES (?, ?, ?)",
@@ -287,8 +288,51 @@ public class Smarticulous {
          * @throws SQLException
          */
     public List<Exercise> loadExercises() throws SQLException {
-        // TODO: Implement
-        return null;
+        // Initialize a statement for the outer query
+        Statement st = db.createStatement();
+        ResultSet resExercises = st.executeQuery("SELECT * FROM Exercise ORDER BY ExerciseId");
+
+        // List to store the ordered exercises
+        List<Exercise> orderedExercisesList = new ArrayList<>();
+
+        // Iterate through the result set of exercises
+        while (resExercises.next()){
+
+            // Extract exercise details from the result set
+            int exerciseId = resExercises.getInt("ExerciseId");
+            String exerciseName = resExercises.getString("Name");
+            Date exerciseDueDate = resExercises.getDate("DueDate");
+
+            // Create an Exercise object with extracted details
+            Exercise exercise = new Exercise(exerciseId, exerciseName, exerciseDueDate);
+
+            // Create the question list for the current exercise
+            List<Exercise.Question> questionsList = new ArrayList<Exercise.Question>();
+
+            // Initialize a statement for the inner query (questions)
+            PreparedStatement preparedStatementQuestion = db.prepareStatement("SELECT * FROM Question WHERE ExerciseId = ?");
+            // Setting parameters to replace the "?" in the sql string.
+            preparedStatementQuestion.setInt(1, exerciseId);
+
+            // Executing the query
+            ResultSet resQuestion = preparedStatementQuestion.executeQuery();
+
+            // Iterate through the result set of questions
+            while (resQuestion.next()) {
+                // Extract question details from the result set
+                String questionName = resQuestion.getString("Name");
+                String questionDesc = resQuestion.getString("Desc");
+                int questionPoints = resQuestion.getInt("Points");
+
+                // Add the question to the list for the current exercise
+                exercise.addQuestion(questionName, questionDesc, questionPoints);
+            }
+
+            // Add the exercise to the list
+            orderedExercisesList.add(exercise);
+        }
+
+        return orderedExercisesList;
     }
 
     // ========== Submission Storage ===============
