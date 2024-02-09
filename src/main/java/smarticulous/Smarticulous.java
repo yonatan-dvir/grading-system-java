@@ -348,7 +348,58 @@ public class Smarticulous {
      * @throws SQLException
      */
     public int storeSubmission(Submission submission) throws SQLException {
-        // TODO: Implement
+        // Create a table of all users with the same Username as the given submission's userName
+        PreparedStatement preparedStatementUsername = db.prepareStatement("SELECT * FROM User WHERE Username = ?");
+        // Setting parameters to replace the "?" in the sql string.
+        preparedStatementUsername.setString(1, submission.user.username);
+
+        // Executing the query
+        ResultSet resUser = preparedStatementUsername.executeQuery();
+
+        // Create a table of all exercises with the same exerciseId as the given exercise's exerciseId
+        PreparedStatement preparedStatementExerciseId = db.prepareStatement("SELECT * FROM Exercise WHERE ExerciseId = ?");
+        // Setting parameters to replace the "?" in the sql string.
+        preparedStatementExerciseId.setInt(1, submission.exercise.id);
+
+        // Executing the query
+        ResultSet resExercise = preparedStatementExerciseId.executeQuery();
+
+        // A user with the same Username does exist - Store the submission
+        if (resUser.next()){
+            PreparedStatement preparedStatementAdd;
+
+            // If the submissionId is not -1, generate it during insertion
+            if (submission.id != -1) {
+                // Insert the given submission to the Submission table
+                preparedStatementAdd = db.prepareStatement("INSERT INTO Submission (UserId, ExerciseId, SubmissionTime) VALUES (?, ?, ?)",
+                        Statement.RETURN_GENERATED_KEYS);
+                // Setting parameters to replace the "?" in the sql string.
+                preparedStatementAdd.setInt(1, resUser.getInt("UserId"));
+                preparedStatementAdd.setInt(2, resExercise.getInt("ExerciseId"));
+                preparedStatementAdd.setDate(3, new java.sql.Date(submission.submissionTime.getTime()));
+            }
+
+            // The id field of the submission will be ignored if it is -1.
+            else {
+                // Insert the given submission to the Submission table
+                preparedStatementAdd = db.prepareStatement("INSERT INTO Submission (SubmissionId, UserId, ExerciseId, SubmissionTime) VALUES (?, ?, ?, ?)",
+                        Statement.RETURN_GENERATED_KEYS);
+                // Setting parameters to replace the "?" in the sql string.
+                preparedStatementAdd.setInt(1, submission.id);
+                preparedStatementAdd.setInt(2, resUser.getInt("UserId"));
+                preparedStatementAdd.setInt(3, resExercise.getInt("ExerciseId"));
+                preparedStatementAdd.setDate(4, new java.sql.Date(submission.submissionTime.getTime()));
+            }
+
+            // Execute the update
+            preparedStatementAdd.executeUpdate();
+
+            // Return the new SubmissionId
+            ResultSet generatedKeys = preparedStatementAdd.getGeneratedKeys();
+            return generatedKeys.getInt(1);
+
+        }
+        // A user with the same Username does not exist - Return -1
         return -1;
     }
 
