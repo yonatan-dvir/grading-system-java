@@ -425,8 +425,14 @@ public class Smarticulous {
      * @return
      */
     PreparedStatement getLastSubmissionGradesStatement() throws SQLException {
-        // TODO: Implement
-        return null;
+        // Set the string of the SQL
+        String sql = "SELECT S.SubmissionId, Q.QuestionId, Q.Grade, S.SubmissionTime " + // Select the relevant fields to be shown in the row
+                "FROM Submission S INNER JOIN QuestionGrade Q ON S.SubmissionId=Q.SubmissionId " +
+                "WHERE S.UserId = (SELECT UserId FROM User WHERE Username = ?) AND S.ExerciseId = ? " + // The rows that relevant for the given exercise by the given user
+                "AND S.SubmissionTime = (SELECT MAX(SubmissionTime) FROM Submission WHERE UserId = S.UserId AND ExerciseId = S.ExerciseId) " + // Show rows of the latest submission
+                "ORDER BY Q.QuestionId LIMIT ?"; // The rows should be sorted by QuestionId, Limit to show only the number of question that the exercise has.
+        return db.prepareStatement(sql);
+
     }
 
     /**
