@@ -129,7 +129,6 @@ public class Smarticulous {
      * @throws SQLException
      */
     public int addOrUpdateUser(User user, String password) throws SQLException {
-        Statement st = db.createStatement();
         // Create a table of all users with the same username as the given user's username
         PreparedStatement preparedStatement = db.prepareStatement("SELECT Username FROM User WHERE Username = ?");
         preparedStatement.setString(1, user.username);
@@ -138,7 +137,7 @@ public class Smarticulous {
         if (res.next()){
             // a user with user.username does exist - update their password and firstname/lastname in the database.
             updateUser(user, password);
-            return res.getInt("userId");
+            return res.getInt("UserId");
         }
         else{
             // The user with user.username does not exist - add it to the database.
@@ -176,7 +175,6 @@ public class Smarticulous {
 
     }
 
-
     /**
      * Verify a user's login credentials.
      *
@@ -190,7 +188,6 @@ public class Smarticulous {
      * @see <a href="https://crackstation.net/hashing-security.htm">How to Hash Passwords Properly</a>
      */
     public boolean verifyLogin(String username, String password) throws SQLException {
-        Statement st = db.createStatement();
         // Create a table of all users with the same username as the given username
         PreparedStatement preparedStatement = db.prepareStatement("SELECT Username FROM User WHERE Username = ?");
         preparedStatement.setString(1, username);
@@ -216,8 +213,22 @@ public class Smarticulous {
      * @throws SQLException
      */
     public int addExercise(Exercise exercise) throws SQLException {
-        // TODO: Implement
-        return -1;
+        PreparedStatement preparedStatement = db.prepareStatement("INSERT INTO Exercise (ExerciseId, Name, DueDate) VALUES (?, ?, ?)",
+                Statement.RETURN_GENERATED_KEYS);
+        preparedStatement.setInt(1, exercise.id);
+        preparedStatement.setString(2, exercise.name);
+        java.sql.Date sqlDueDate = new java.sql.Date(exercise.dueDate.getTime());
+        preparedStatement.setDate(3, sqlDueDate);
+
+        try {
+            ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+            return generatedKeys.getInt(1);
+        }
+        // Return the new exercise id, or -1 if an exercise with this id already existed in the database
+        catch (SQLException e) {
+            return -1;
+        }
+
     }
 
 
