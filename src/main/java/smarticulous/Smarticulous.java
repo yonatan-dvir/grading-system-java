@@ -88,7 +88,7 @@ public class Smarticulous {
         // Make sure the database contains the following tables and create them if necessary
         createTable("User", "UserId INTEGER PRIMARY KEY, Username TEXT UNIQUE, Firstname TEXT, Lastname TEXT, Password TEXT");
         createTable("Exercise", "ExerciseId INTEGER PRIMARY KEY, Name TEXT, DueDate INTEGER");
-        createTable("Question", "ExerciseId INTEGER, QuestionId INTEGER, Name TEXT, Desc TEXT, Points INTEGER, PRIMARY KEY (ExerciseId, QuestionId)");
+        createTable("Question", "ExerciseId INTEGER, QuestionId INTEGER AUTO_INCREMENT, Name TEXT, Desc TEXT, Points INTEGER, PRIMARY KEY (ExerciseId, QuestionId)");
         createTable("Submission", "SubmissionId INTEGER PRIMARY KEY, UserId INTEGER, ExerciseId INTEGER, SubmissionTime INTEGER");
         createTable("QuestionGrade", "SubmissionId INTEGER, QuestionId INTEGER, Grade REAL, PRIMARY KEY (SubmissionId, QuestionId)");
 
@@ -134,28 +134,33 @@ public class Smarticulous {
         // Setting parameters to replace the "?" in the sql string.
         preparedStatement.setString(1, user.username);
 
+        // Executing the query
         ResultSet res = preparedStatement.executeQuery();
+
+        // a user with user.username does exist - update their password and firstname/lastname in the database.
         if (res.next()){
-            // a user with user.username does exist - update their password and firstname/lastname in the database.
             updateUser(user, password);
             return res.getInt("UserId");
         }
+
+        // The user with user.username does not exist - add it to the database.
         else{
-            // The user with user.username does not exist - add it to the database.
             return createUser(user, password);
         }
     }
 
     // Helper method - create new user with the given User's firstname, lastname and the given password
     private int createUser(User user, String password) throws SQLException{
+        // Insert the given user to the User table
         PreparedStatement preparedStatement = db.prepareStatement("INSERT INTO User (Username, Firstname, Lastname, Password) VALUES (?, ?, ?, ?)",
                 Statement.RETURN_GENERATED_KEYS);
+        // Setting parameters to replace the "?" in the sql string.
         preparedStatement.setString(1, user.username);
         preparedStatement.setString(2, user.firstname);
         preparedStatement.setString(3, user.lastname);
         preparedStatement.setString(4, password);
 
-        // should I????
+        // Executing the update
         preparedStatement.executeUpdate();
 
         // Return the new userId
@@ -166,12 +171,13 @@ public class Smarticulous {
     // Helper method - update the given user firstname, lastname and the given password
     private void updateUser(User user, String password) throws SQLException{
         PreparedStatement preparedStatement = db.prepareStatement("UPDATE User SET Password = ?, Firstname = ?, Lastname = ? WHERE Username = ?");
+        // Setting parameters to replace the "?" in the sql string.
         preparedStatement.setString(1, password);
         preparedStatement.setString(2, user.firstname);
         preparedStatement.setString(3, user.lastname);
         preparedStatement.setString(4, user.username);
 
-        // Executing the query
+        // Executing the update
         preparedStatement.executeUpdate();
 
     }
@@ -214,33 +220,72 @@ public class Smarticulous {
      * @throws SQLException
      */
     public int addExercise(Exercise exercise) throws SQLException {
-        PreparedStatement preparedStatement = db.prepareStatement("INSERT INTO Exercise (ExerciseId, Name, DueDate) VALUES (?, ?, ?)",
-                Statement.RETURN_GENERATED_KEYS);
+        // Create a table of all exercises with the same id as the given exercise's id
+        PreparedStatement preparedStatement = db.prepareStatement("SELECT ExerciseId FROM Exercise WHERE ExerciseId = ?");
+        // Setting parameters to replace the "?" in the sql string.
         preparedStatement.setInt(1, exercise.id);
-        preparedStatement.setString(2, exercise.name);
-        java.sql.Date sqlDueDate = new java.sql.Date(exercise.dueDate.getTime());
-        preparedStatement.setDate(3, sqlDueDate);
 
-        try {
-            ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
-            return generatedKeys.getInt(1);
-        }
-        // Return the new exercise id, or -1 if an exercise with this id already existed in the database
-        catch (SQLException e) {
+        // Executing the query
+        ResultSet res = preparedStatement.executeQuery();
+
+        // An exercise with exercise.id does exist - Return -1
+        if (res.next()){
             return -1;
+        }
+        // The user with user.username does not exist - add it to the database and return it's Id.
+        else{
+            // Insert the given exercise to the Exercise table
+            PreparedStatement preparedStatementAdd = db.prepareStatement("INSERT INTO Exercise (ExerciseId, Name, DueDate) VALUES (?, ?, ?)",
+                    Statement.RETURN_GENERATED_KEYS);
+            // Setting parameters to replace the "?" in the sql string.
+            preparedStatementAdd.setInt(1, exercise.id);
+            preparedStatementAdd.setString(2, exercise.name);
+            java.sql.Date sqlDueDate = new java.sql.Date(exercise.dueDate.getTime());
+            preparedStatementAdd.setDate(3, sqlDueDate);
+
+            // Executing the update
+            preparedStatementAdd.executeUpdate();
+
+            // Add the added exercise's questions to the Question table
+            for (Exercise.Question question : exercise.questions){
+                addQuestion(question, exercise.id);
+            }
+
+            // Return the new ExerciseId
+            ResultSet generatedKeys = preparedStatementAdd.getGeneratedKeys();
+            return generatedKeys.getInt(1);
         }
 
     }
 
-
     /**
-     * Return a list of all the exercises in the database.
-     * <p>
-     * The list should be sorted by exercise id.
+     * Add a question to the database.
      *
-     * @return list of all exercises.
+     * @param question
+     * @param exerciseId
      * @throws SQLException
      */
+    public void addQuestion(Exercise.Question question, int exerciseId) throws SQLException {
+        // Insert the given question to the Question table
+        PreparedStatement preparedStatementAdd = db.prepareStatement("INSERT INTO Question (ExerciseId, Name, Desc, Points) VALUES (?, ?, ?, ?)");
+        // Setting parameters to replace the "?" in the sql string.
+        preparedStatementAdd.setInt(1, exerciseId);
+        preparedStatementAdd.setString(2, question.name);
+        preparedStatementAdd.setString(3, question.desc);
+        preparedStatementAdd.setInt(4, question.points);
+
+        // Executing the update
+        preparedStatementAdd.executeUpdate();
+    }
+
+        /**
+         * Return a list of all the exercises in the database.
+         * <p>
+         * The list should be sorted by exercise id.
+         *
+         * @return list of all exercises.
+         * @throws SQLException
+         */
     public List<Exercise> loadExercises() throws SQLException {
         // TODO: Implement
         return null;
